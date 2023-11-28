@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 
 using std::cin;
 using std::cout;
@@ -20,6 +21,15 @@ int map[mapsize][mapsize] =
 	 0,0,0,0,0,3};
 
 int cost[mapsize][mapsize];
+
+struct Cost[mapsize][mapsize]
+{
+	int x_;
+	int y_;
+	int cellCount;
+	int heuristic;
+	int cost;
+};
 
 enum chip
 {
@@ -78,6 +88,42 @@ int main()
 	}
 
 	//スタートからゴールの最短はどの値？
+	//上下左右進める？
+	
+	int costCount = 1;
+	int X = sX;
+	int Y = sY;
+
+	//↑に進めるか判定
+	if (Y - costCount >= 0)
+	{
+		if (cost[X][Y - costCount] == -1 && map[X][Y - costCount] || PATH && map[X][Y - costCount] || GOAL) {
+			//進めたらコスト計算
+			//コストの計算方法は【進んだ距離+｜開始点X-終点X｜+｜開始点Y-終点Y｜】
+			cost[X][Y - costCount] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
+		}
+	}
+
+	/*//下に進めるか
+	if (Y + costCount < mapsize)
+	{
+		if(cost[X][Y + costCount] == -1 && map[X][Y + costCount] || PATH && map[X][Y + costCount] || GOAL)
+			cost[X][Y + costCount] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
+	}
+
+	//右に進める？
+	if (X - costCount >= 0)
+	{
+		if (cost[X - costCount][Y] == -1 && map[X - costCount][Y] || PATH && map[X - costCount][Y] || GOAL)
+			cost[X - costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
+	}
+
+	//左に進める？
+	if (X + costCount >= 0)
+	{
+		if (cost[X + costCount][Y] == -1 && map[X + costCount][Y] || PATH && map[X + costCount][Y] || GOAL)
+			cost[X + costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
+	}*/
 
 	return 0;
 }
