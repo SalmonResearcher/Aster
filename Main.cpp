@@ -22,7 +22,7 @@ int map[mapsize][mapsize] =
 
 int cost[mapsize][mapsize];
 
-struct Cost[mapsize][mapsize]
+struct Cost
 {
 	int x_;
 	int y_;
@@ -33,7 +33,8 @@ struct Cost[mapsize][mapsize]
 
 enum chip
 {
-	PATH = 0,
+	DEFAULT = -1,
+	PATH,
 	WALL,
 	START,
 	GOAL
@@ -54,7 +55,7 @@ int main()
 	for (int x = 0; x < mapsize; x++) {
 		for (int y = 0; y < mapsize; y++) {
 			//コストのリセット
-			cost[x][y] = -1;
+			cost[x][y] = DEFAULT;
 
 			switch (map[x][y])
 			{
@@ -94,36 +95,41 @@ int main()
 	int X = sX;
 	int Y = sY;
 
-	//↑に進めるか判定
+	//上は配列外かどうか
 	if (Y - costCount >= 0)
 	{
-		if (cost[X][Y - costCount] == -1 && map[X][Y - costCount] || PATH && map[X][Y - costCount] || GOAL) {
-			//進めたらコスト計算
-			//コストの計算方法は【進んだ距離+｜開始点X-終点X｜+｜開始点Y-終点Y｜】
-			cost[X][Y - costCount] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
+		//上に進める？(コスト値はデフォ値-1であり（前に通ったことがない）、壁（1）でない)
+		if (cost[X][Y - costCount] == DEFAULT && cost[X][Y - costCount] != WALL)
+		{
+			cost[X][Y - costCount] = costCount + std::abs(sX - gX) + std::abs((sY - costCount) - gY);
+		}
+		else if (cost[X][Y - costCount] == WALL)
+		{
+			cost[X][Y - costCount] = -2;
 		}
 	}
+	
 
-	/*//下に進めるか
+	//下は配列外かどうか
 	if (Y + costCount < mapsize)
 	{
 		if(cost[X][Y + costCount] == -1 && map[X][Y + costCount] || PATH && map[X][Y + costCount] || GOAL)
 			cost[X][Y + costCount] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
 	}
 
-	//右に進める？
-	if (X - costCount >= 0)
+	//右は配列外かどうか
+	if (X - costCount > mapsize)
 	{
 		if (cost[X - costCount][Y] == -1 && map[X - costCount][Y] || PATH && map[X - costCount][Y] || GOAL)
 			cost[X - costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
 	}
 
-	//左に進める？
+	//左は配列外かどうか
 	if (X + costCount >= 0)
 	{
 		if (cost[X + costCount][Y] == -1 && map[X + costCount][Y] || PATH && map[X + costCount][Y] || GOAL)
 			cost[X + costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
-	}*/
+	}
 
 	return 0;
 }
