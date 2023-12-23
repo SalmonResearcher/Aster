@@ -1,135 +1,99 @@
 #include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
 #include <cstdlib>
 
 using std::cin;
 using std::cout;
 using std::endl;
+using std::vector;
 
-int sX;
-int sY;
-
-int gX;
-int gY;
-
-const int mapsize = 6;
-int map[mapsize][mapsize] =
-	{0,0,0,0,0,0,
-	 0,0,0,0,1,0,
-	 0,0,0,2,1,0,
-	 0,1,1,1,1,0,
-	 0,0,0,1,0,0,
-	 0,0,0,0,0,3};
-
-int cost[mapsize][mapsize];
-
-struct Cost
-{
-	int x_;
-	int y_;
-	int cellCount;
-	int heuristic;
-	int cost;
+struct Node {
+	int x;      //X座標
+	int y;      //Y座標
+	int f;      
+	int cost;      //ゴールまでのコスト
+	int h;      //ヒューリスティック値
+    Node* parent;//親ノード（つかえるかな？）
+    Node(int x, int y, int cost, int h, Node* parent) : x(x), y(y), cost(cost), h(h), parent(parent) {
+        f = cost + h;
+    }
 };
 
-enum chip
-{
-	DEFAULT = -1,
-	PATH,
-	WALL,
-	START,
-	GOAL
+enum WallPath {
+	P = 0,
+	W
 };
 
-enum Move
-{
-	UP = 0,
-	RIGHT,
-	DOWN,
-	LEFT,
-	MAX
-};
+int main(){
+    vector<vector<WallPath>> map = {
+    {P,P,P,P,W,P},
+    {P,W,P,W,W,P},
+    {P,P,P,P,P,P},
+    {P,W,W,W,W,P},
+    {P,P,P,W,P,P},
+    {P,W,P,P,P,P}
+    };
 
-//6*6のマスを作ります
-int main() 
-{
-	for (int x = 0; x < mapsize; x++) {
-		for (int y = 0; y < mapsize; y++) {
-			//コストのリセット
-			cost[x][y] = DEFAULT;
+	int startX = 0;
+	int startY = 0;
+	int goalX = 6;
+	int goalY = 6;
 
-			switch (map[x][y])
-			{
-			case PATH:
-				cout << "　";
-				break;
+    vector<vector<int>> path = AStarAlgorithm(map, startX, startY, goalX, goalY);
+}
 
-			case WALL:
-				cout << "■";
-				break;
+//マップにデータはあるか（配列外じゃないかどうか）
+bool isValid(int x, int y, int numRows, int numCols) {
+    return x >= 0 && x < numRows && y >= 0 && y < numCols;
+}
 
-			case START:
-				cout << "Ｓ";
-				//スタート地点のコスト値を０にします
-				cost[x][y] = 0;
-				sX = x;
-				sY = y;
+//ヒューリスティック関数(|終点x - 始点x| + |終点y - 始点y|)
+int calculateHeuristic(int x, int y, int targetX, int targetY) {
+    return abs(targetX - x) + abs(targetY - y);
+}
 
-				break;
+//Astarアルゴリズム
+vector<vector<int>> AStarAlgorithm(vector<vector<WallPath>>& map, int startX, int startY, int targetX, int targetY) {
+    //マップの外にスタート、ゴールを設定しないように検索用の変数
+    int numRows = map.size();
+    int numCols = map[0].size();
 
-			case GOAL:
-				cout << "Ｇ";
+    //マップのスタート地点とゴール地点はふさわしいか
+    if (!isValid(startX, startY, numRows, numCols) || !isValid(targetX, targetY, numRows, numCols)) {
+        cout << "ゴールの座標かスタート地点の座標が配列外を指定しています" << endl;
+        return {};
+    }
 
-				gX = x;
-				gY = y;
+    //スタート地点やゴール地点が壁だった時
+    if (map[startX][startY] == W || map[targetX][targetY] == W) {
+        cout << "スタート地点かゴール地点がふさがれています" << endl;
+        return {};
+    }
 
-				break;
-			}
-		}
-		cout << endl;
-	}
+    //通ったところを記録する変数
+    vector<Node*> openNodes;
 
-	//スタートからゴールの最短はどの値？
-	//上下左右進める？
-	
-	int costCount = 1;
-	int X = sX;
-	int Y = sY;
+    //場所のコスト値を持つ
+    vector<vector<int>> costs;
+    
+    //スタート地点、スタートからゴールまでのマス数を持つ
+    Node* startNode = new Node(startX, startY, 0, calculateHeuristic(startX, startY, targetX, targetY), nullptr);
 
-	//上は配列外かどうか
-	if (Y - costCount >= 0)
-	{
-		//上に進める？(コスト値はデフォ値-1であり（前に通ったことがない）、壁（1）でない)
-		if (cost[X][Y - costCount] == DEFAULT && cost[X][Y - costCount] != WALL)
-		{
-			cost[X][Y - costCount] = costCount + std::abs(sX - gX) + std::abs((sY - costCount) - gY);
-		}
-		else if (cost[X][Y - costCount] == WALL)
-		{
-			cost[X][Y - costCount] = -2;
-		}
-	}
-	
+    //現在地をプッシュします、現在地のコストを0にします
+    //現在地、プッシュできません！
+    openNodes.push(startNode);
+    costs[startX][startY] = 0;
 
-	//下は配列外かどうか
-	if (Y + costCount < mapsize)
-	{
-		if(cost[X][Y + costCount] == -1 && map[X][Y + costCount] || PATH && map[X][Y + costCount] || GOAL)
-			cost[X][Y + costCount] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
-	}
+    //移動用
+    vector<int> moveX { -1,0,1,0 };
+    vector<int> moveY { 0,1,0,-1 };
 
-	//右は配列外かどうか
-	if (X - costCount > mapsize)
-	{
-		if (cost[X - costCount][Y] == -1 && map[X - costCount][Y] || PATH && map[X - costCount][Y] || GOAL)
-			cost[X - costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
-	}
+    while (!openNodes.empty())
+    {
+        //なんこれなんでダメ？
+        Node* currentNode = openNodes.begin();
+    }
 
-	//左は配列外かどうか
-	if (X + costCount >= 0)
-	{
-		if (cost[X + costCount][Y] == -1 && map[X + costCount][Y] || PATH && map[X + costCount][Y] || GOAL)
-			cost[X + costCount][Y] = costCount + std::abs(sX - gX) + std::abs(sY - gY);
-	}
-
-	return 0;
 }
